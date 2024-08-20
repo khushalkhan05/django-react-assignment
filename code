@@ -1,0 +1,64 @@
+# Install Django and Django REST framework
+!pip install django
+!pip install djangorestframework
+!pip install pyngrok
+
+# Create a new Django project
+!django-admin startproject myproject
+
+# Navigate into the project directory and create a new app
+!cd myproject && django-admin startapp api
+
+# Create API views
+%%writefile myproject/api/views.py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['GET'])
+def get_data(request):
+    data = {
+        "message": "Hello from Django!"
+    }
+    return Response(data)
+
+@api_view(['POST'])
+def post_data(request):
+    received_data = request.data
+    response_data = {
+        "received": received_data,
+        "status": "Data received successfully!"
+    }
+    return Response(response_data)
+
+# Configure URLs for the API
+%%writefile myproject/api/urls.py
+from django.urls import path
+from .views import get_data, post_data
+
+urlpatterns = [
+    path('get/', get_data),
+    path('post/', post_data),
+]
+
+# Include the api URLs in the project's main URLs
+%%writefile myproject/myproject/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
+]
+
+# Run Django migrations
+!cd myproject && python manage.py migrate
+
+# Start the Django development server
+!cd myproject && python manage.py runserver 0.0.0.0:8000 &
+
+# Expose the Django server using Ngrok
+from pyngrok import ngrok
+
+# Start ngrok tunnel for port 8000
+public_url = ngrok.connect(8000)
+print('Public URL:', public_url)
